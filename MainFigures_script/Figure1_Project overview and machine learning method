@@ -1,0 +1,389 @@
+### Figure 1D ###
+library("ggplot2")
+library("reshape2")
+Alu <- read.table("/Users/xiaoweizhu/Documents/MEI/Platinum/False_Positive/Alu_v42.txt", header=T, sep="\t")
+L1 <- read.table("/Users/xiaoweizhu/Documents/MEI/Platinum/False_Positive/L1_v42.txt", header=T, sep="\t")
+
+dat.m <- melt(L1,id.vars='L1_total', measure.vars=c('FP1','FP2','FP3', 'FP4', 'FP5'))
+xlabels <- c("1", "2", "3", "4", "5")
+sens <- c(10^0.5, 10^1, 10^1.5, 10^2, 10^2.5)
+
+ggplot(dat.m, aes(variable, value)) +
+   geom_boxplot(fill="#a9aac6", size=.3) +
+   scale_y_log10(breaks=c(1, 10, 100, 1000, 5000, 10000, 20000, 40000, 80000), limits=c(1,80000)) +
+   labs(x = "# Supporting reads",
+        y = "# False L1 MEIs") +
+   scale_x_discrete(labels= xlabels) +
+   theme(axis.text.x = element_text(size = 12), axis.title.x = element_text(size = 16) ) +
+   theme(axis.title.y = element_text(size = 16)) +
+   stat_summary(fun.y=median, geom="line", aes(group=1),colour = "#a9aac6", size = 0.5) +
+   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+   panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+   annotate(geom = 'segment', y = Inf, yend = Inf, color = 'black', x = -Inf, xend = Inf, size =1)
+
+mosaic <- c(0.96, 2.24, 3.72, 5.04, 6.48)
+names <- c("1", "2", "3", "4", "5")
+titr <-data.frame(names, mosaic)
+ggplot(titr, aes(x=names, y=mosaic)) +
+    geom_bar(stat="identity", fill="#be1e2d",alpha=0.8) +
+    geom_text(aes(label=mosaic), vjust=-1, color="black",
+              position = position_dodge(0.9), size=5) +
+    scale_y_continuous(limits = c(0, 8)) +
+    theme_bw()
+
+    
+### Figure 1F and 1G ###
+library(ggplot2)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval:
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+
+plus01<- read.table("/home/xwzhu/Platium/hg38/NA12879/retro_v41_1/NA12879.pe.LINE.matrix2", sep="\t", header=T)
+plus02<- read.table("/home/xwzhu/Platium/hg38/NA12881/retro_v41_1/NA12881.pe.LINE.matrix2", sep="\t", header=T)
+plus03<- read.table("/home/xwzhu/Platium/hg38/NA12883/retro_v41_1/NA12883.pe.LINE.matrix2", sep="\t", header=T)
+plus04<- read.table("/home/xwzhu/Platium/hg38/NA12884/retro_v41_1/NA12884.pe.LINE.matrix2", sep="\t", header=T)
+plus05<- read.table("/home/xwzhu/Platium/hg38/NA12885/retro_v41_1/NA12885.pe.LINE.matrix2", sep="\t", header=T)
+plus06<- read.table("/home/xwzhu/Platium/hg38/NA12886/retro_v41_1/NA12886.pe.LINE.matrix2", sep="\t", header=T)
+plus07<- read.table("/home/xwzhu/Platium/hg38/NA12887/retro_v41_1/NA12887.pe.LINE.matrix2", sep="\t", header=T)
+plus08<- read.table("/home/xwzhu/Platium/hg38/NA12888/retro_v41_1/NA12888.pe.LINE.matrix2", sep="\t", header=T)
+plus09<- read.table("/home/xwzhu/Platium/hg38/NA12893/retro_v41_1/NA12893.pe.LINE.matrix2", sep="\t", header=T)
+plus10<- read.table("/home/xwzhu/Platium/hg38/NA12882/retro_v41_1/NA12882.pe.LINE.matrix2", sep="\t", header=T)
+plus11<- read.table("/home/xwzhu/Platium/hg38/NA12880/retro_v41_1/NA12880.pe.LINE.matrix2", sep="\t", header=T)
+
+minus01<- read.table("/home/xwzhu/Platium/hg38/NA12879/retro_v41_0/NA12879.pe.LINE.matrix2", sep="\t", header=T)
+minus02<- read.table("/home/xwzhu/Platium/hg38/NA12881/retro_v41_0/NA12881.pe.LINE.matrix2", sep="\t", header=T)
+minus03<- read.table("/home/xwzhu/Platium/hg38/NA12883/retro_v41_0/NA12883.pe.LINE.matrix2", sep="\t", header=T)
+minus04<- read.table("/home/xwzhu/Platium/hg38/NA12884/retro_v41_0/NA12884.pe.LINE.matrix2", sep="\t", header=T)
+minus05<- read.table("/home/xwzhu/Platium/hg38/NA12885/retro_v41_0/NA12885.pe.LINE.matrix2", sep="\t", header=T)
+minus06<- read.table("/home/xwzhu/Platium/hg38/NA12886/retro_v41_0/NA12886.pe.LINE.matrix2", sep="\t", header=T)
+minus07<- read.table("/home/xwzhu/Platium/hg38/NA12887/retro_v41_0/NA12887.pe.LINE.matrix2", sep="\t", header=T)
+minus08<- read.table("/home/xwzhu/Platium/hg38/NA12888/retro_v41_0/NA12888.pe.LINE.matrix2", sep="\t", header=T)
+minus09<- read.table("/home/xwzhu/Platium/hg38/NA12893/retro_v41_0/NA12893.pe.LINE.matrix2", sep="\t", header=T)
+minus10<- read.table("/home/xwzhu/Platium/hg38/NA12882/retro_v41_0/NA12882.pe.LINE.matrix2", sep="\t", header=T)
+minus11<- read.table("/home/xwzhu/Platium/hg38/NA12880/retro_v41_0/NA12880.pe.LINE.matrix2", sep="\t", header=T)
+
+dat01 <- rbind(plus01, minus01)
+dat02 <- rbind(plus02, minus02)
+dat03 <- rbind(plus03, minus03)
+dat04 <- rbind(plus04, minus04)
+dat05 <- rbind(plus05, minus05)
+dat06 <- rbind(plus06, minus06)
+dat07 <- rbind(plus07, minus07)
+dat08 <- rbind(plus08, minus08)
+dat09 <- rbind(plus09, minus09)
+dat10 <- rbind(plus10, minus10)
+dat11 <- rbind(plus11, minus11)
+
+subdata01 <- subset(dat01, (dat01[,7] == 1 | dat01[,8] == 1) & ref == 0)
+subdata02 <- subset(dat02, (dat02[,7] == 1 | dat02[,8] == 1) & ref == 0)
+subdata03 <- subset(dat03, (dat03[,7] == 1 | dat03[,8] == 1) & ref == 0)
+subdata04 <- subset(dat04, (dat04[,7] == 1 | dat04[,8] == 1) & ref == 0)
+subdata05 <- subset(dat05, (dat05[,7] == 1 | dat05[,8] == 1) & ref == 0)
+subdata06 <- subset(dat06, (dat06[,7] == 1 | dat06[,8] == 1) & ref == 0)
+subdata07 <- subset(dat07, (dat07[,7] == 1 | dat07[,8] == 1) & ref == 0)
+subdata08 <- subset(dat08, (dat08[,7] == 1 | dat08[,8] == 1) & ref == 0)
+subdata09 <- subset(dat09, (dat09[,7] == 1 | dat09[,8] == 1) & ref == 0)
+subdata10 <- subset(dat10, (dat10[,7] == 1 | dat10[,8] == 1) & ref == 0)
+subdata11 <- subset(dat11, (dat11[,7] == 1 | dat11[,8] == 1) & ref == 0)
+
+### nested cross validation ###
+test01 <-cbind(subdata01, rep(1, dim(subdata01)[1]))
+test02 <-cbind(subdata02, rep(2, dim(subdata02)[1]))
+test03 <-cbind(subdata03, rep(3, dim(subdata03)[1]))
+test04 <-cbind(subdata04, rep(4, dim(subdata04)[1]))
+test05 <-cbind(subdata05, rep(5, dim(subdata05)[1]))
+test06 <-cbind(subdata06, rep(6, dim(subdata06)[1]))
+test07 <-cbind(subdata07, rep(7, dim(subdata07)[1]))
+test08 <-cbind(subdata08, rep(8, dim(subdata08)[1]))
+test09 <-cbind(subdata09, rep(9, dim(subdata09)[1]))
+test10 <-cbind(subdata10, rep(10, dim(subdata10)[1]))
+test11 <-cbind(subdata11, rep(11, dim(subdata11)[1]))
+
+
+name <- names(dat02)
+colnames(test01) <- c(name, "ID")
+colnames(test02) <- c(name, "ID")
+colnames(test03) <- c(name, "ID")
+colnames(test04) <- c(name, "ID")
+colnames(test05) <- c(name, "ID")
+colnames(test06) <- c(name, "ID")
+colnames(test07) <- c(name, "ID")
+colnames(test08) <- c(name, "ID")
+colnames(test09) <- c(name, "ID")
+colnames(test10) <- c(name, "ID")
+colnames(test11) <- c(name, "ID")
+
+total <- rbind(test01, test02, test03, test04, test05, test06, test07, test08, test09, test10, test11)
+total$gap <- total$gap/(abs(total$refpos1 - total$refpos2))
+
+### panel 1, Mappability ###
+map <- data.frame(as.character(total$pos), total$ID, total$map)
+names(map) <- c("pos", "id", "map")
+posneg <- c("#be1e2d", "#a9aac6")
+
+p1 <- hist(subset(total, pos==1 & ID == 1)[,13], breaks=seq(85,100,1))
+p2 <- hist(subset(total, pos==1 & ID == 2)[,13], breaks=seq(85,100,1))
+p3 <- hist(subset(total, pos==1 & ID == 3)[,13], breaks=seq(85,100,1))
+p4 <- hist(subset(total, pos==1 & ID == 4)[,13], breaks=seq(85,100,1))
+p5 <- hist(subset(total, pos==1 & ID == 5)[,13], breaks=seq(85,100,1))
+p6 <- hist(subset(total, pos==1 & ID == 6)[,13], breaks=seq(85,100,1))
+p7 <- hist(subset(total, pos==1 & ID == 7)[,13], breaks=seq(85,100,1))
+p8 <- hist(subset(total, pos==1 & ID == 8)[,13], breaks=seq(85,100,1))
+p9 <- hist(subset(total, pos==1 & ID == 9)[,13], breaks=seq(85,100,1))
+p10 <- hist(subset(total, pos==1 & ID == 10)[,13], breaks=seq(85,100,1))
+p11<- hist(subset(total, pos==1 & ID == 11)[,13], breaks=seq(85,100,1))
+
+n1 <- hist(subset(total, pos==0 & ID == 1)[,13], breaks=seq(85,100,1))
+n2 <- hist(subset(total, pos==0 & ID == 2)[,13], breaks=seq(85,100,1))
+n3 <- hist(subset(total, pos==0 & ID == 3)[,13], breaks=seq(85,100,1))
+n4 <- hist(subset(total, pos==0 & ID == 4)[,13], breaks=seq(85,100,1))
+n5 <- hist(subset(total, pos==0 & ID == 5)[,13], breaks=seq(85,100,1))
+n6 <- hist(subset(total, pos==0 & ID == 6)[,13], breaks=seq(85,100,1))
+n7 <- hist(subset(total, pos==0 & ID == 7)[,13], breaks=seq(85,100,1))
+n8 <- hist(subset(total, pos==0 & ID == 8)[,13], breaks=seq(85,100,1))
+n9 <- hist(subset(total, pos==0 & ID == 9)[,13], breaks=seq(85,100,1))
+n10 <- hist(subset(total, pos==0 & ID == 10)[,13], breaks=seq(85,100,1))
+n11<- hist(subset(total, pos==0 & ID == 11)[,13], breaks=seq(85,100,1))
+
+pos1 <- data.frame("L1"=rep("pos", 15), "group"=rep("1", 15), "mids"=p1$mids, "density"=p1$density)
+pos2 <- data.frame("L1"=rep("pos", 15), "group"=rep("2", 15), "mids"=p2$mids, "density"=p2$density)
+pos3 <- data.frame("L1"=rep("pos", 15), "group"=rep("3", 15), "mids"=p3$mids, "density"=p3$density)
+pos4 <- data.frame("L1"=rep("pos", 15), "group"=rep("4", 15), "mids"=p4$mids, "density"=p4$density)
+pos5 <- data.frame("L1"=rep("pos", 15), "group"=rep("5", 15), "mids"=p5$mids, "density"=p5$density)
+pos6 <- data.frame("L1"=rep("pos", 15), "group"=rep("6", 15), "mids"=p6$mids, "density"=p6$density)
+pos7 <- data.frame("L1"=rep("pos", 15), "group"=rep("7", 15), "mids"=p7$mids, "density"=p7$density)
+pos8 <- data.frame("L1"=rep("pos", 15), "group"=rep("8", 15), "mids"=p8$mids, "density"=p8$density)
+pos9 <- data.frame("L1"=rep("pos", 15), "group"=rep("9", 15), "mids"=p9$mids, "density"=p9$density)
+pos10 <- data.frame("L1"=rep("pos", 15), "group"=rep("10", 15), "mids"=p10$mids, "density"=p10$density)
+pos11 <- data.frame("L1"=rep("pos", 15), "group"=rep("11", 15), "mids"=p11$mids, "density"=p11$density)
+
+neg1 <- data.frame("L1"=rep("neg", 15), "group"=rep("1", 15), "mids"=n1$mids, "density"=n1$density)
+neg2 <- data.frame("L1"=rep("neg", 15), "group"=rep("2", 15), "mids"=n2$mids, "density"=n2$density)
+neg3 <- data.frame("L1"=rep("neg", 15), "group"=rep("3", 15), "mids"=n3$mids, "density"=n3$density)
+neg4 <- data.frame("L1"=rep("neg", 15), "group"=rep("4", 15), "mids"=n4$mids, "density"=n4$density)
+neg5 <- data.frame("L1"=rep("neg", 15), "group"=rep("5", 15), "mids"=n5$mids, "density"=n5$density)
+neg6 <- data.frame("L1"=rep("neg", 15), "group"=rep("6", 15), "mids"=n6$mids, "density"=n6$density)
+neg7 <- data.frame("L1"=rep("neg", 15), "group"=rep("7", 15), "mids"=n7$mids, "density"=n7$density)
+neg8 <- data.frame("L1"=rep("neg", 15), "group"=rep("8", 15), "mids"=n8$mids, "density"=n8$density)
+neg9 <- data.frame("L1"=rep("neg", 15), "group"=rep("9", 15), "mids"=n9$mids, "density"=n9$density)
+neg10 <- data.frame("L1"=rep("neg", 15), "group"=rep("10", 15), "mids"=n10$mids, "density"=n10$density)
+neg11 <- data.frame("L1"=rep("neg", 15), "group"=rep("11", 15), "mids"=n11$mids, "density"=n11$density)
+map <- rbind(pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9, pos10, pos11, neg1, neg2, neg3, neg4, neg5, neg6, neg7, neg8, neg9, neg10, neg11)
+names(map) <- c("L1", "group", "mids", "density")
+posneg <- c( "#a9aac6","#be1e2d")
+
+ggplot(map, aes(y=density, x=mids, color=L1)) +
+  stat_summary(aes(fill = L1), geom="ribbon", linetype=0,fun.data="mean_cl_normal", fun.args = list(mult = 1.96), alpha=0.7) +
+  theme(legend.justification = c(0, 1), legend.position = c(0, 1)) +
+  theme(legend.text=element_text(size=16),legend.title=element_text(size=18,face="bold")) +
+  xlab("Map (identity% to L1HS)") +
+  ylab("Density") +
+  theme_bw() +
+  scale_fill_manual(values = c(posneg)) +
+  theme(axis.text=element_text(size=9),
+      axis.title=element_text(size=10,face="bold")) +
+  theme(legend.justification = c(0, 1), legend.position = c(0, 1)) +
+  theme(legend.text=element_text(size=8),legend.title=element_text(size=9,face="bold"))
+ggsave("/home/xwzhu/levinson/MEI_plots/L1_PE01_mappingID.eps", width=7, height=7, device=cairo_ps)
+
+# Figure 1G #
+sub <- subset(total, !is.na(ACAG))
+pos1 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="1")$ACAG))[2])
+pos2 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="2")$ACAG))[2])
+pos3 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="3")$ACAG))[2])
+pos4 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="4")$ACAG))[2])
+pos5 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="5")$ACAG))[2])
+pos6 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="6")$ACAG))[2])
+pos7 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="7")$ACAG))[2])
+pos8 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="8")$ACAG))[2])
+pos9 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="9")$ACAG))[2])
+pos10 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="10")$ACAG))[2])
+pos11 <- data.frame("L1"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="11")$ACAG))[2])
+
+neg1 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="1")$ACAG))[2])
+neg2 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="2")$ACAG))[2])
+neg3 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="3")$ACAG))[2])
+neg4 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="4")$ACAG))[2])
+neg5 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="5")$ACAG))[2])
+neg6 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="6")$ACAG))[2])
+neg7 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="7")$ACAG))[2])
+neg8 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="8")$ACAG))[2])
+neg9 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="9")$ACAG))[2])
+neg10 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="10")$ACAG))[2])
+neg11 <- data.frame("L1"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="11")$ACAG))[2])
+map <- rbind(pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9, pos10, pos11, neg1, neg2, neg3, neg4, neg5, neg6, neg7, neg8, neg9, neg10, neg11)
+summap <- summarySE(map, measurevar="percentage", groupvars="L1")
+ggplot(summap, aes(x=L1, y=percentage, fill=L1)) +
+        geom_bar(position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=percentage-ci, ymax=percentage+ci),
+                  size=.3,    # Thinner lines
+                  width=.2,
+                  position=position_dodge(.9)) +
+    xlab("") +
+    ylab("") +
+    guides(fill=FALSE) +
+    scale_y_continuous(limits = c(0, 100), breaks=c(0, 20, 40, 60, 80, 100)) +
+    theme_bw() +
+    theme(legend.justification = c(1, 1), legend.position = c(1, 1)) +
+    theme(legend.text=element_text(size=16),legend.title=element_text(size=18,face="bold")) +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold")) +
+    scale_fill_manual(values = c(posneg))
+
+### Figure 1H, using the same summarySE function as Figure 1F ###
+plus01<- read.table("/home/xwzhu/Platium/hg38/NA12879/retro_v42_1/NA12879.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus02<- read.table("/home/xwzhu/Platium/hg38/NA12881/retro_v42_1/NA12881.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus03<- read.table("/home/xwzhu/Platium/hg38/NA12883/retro_v42_1/NA12883.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus04<- read.table("/home/xwzhu/Platium/hg38/NA12884/retro_v42_1/NA12884.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus05<- read.table("/home/xwzhu/Platium/hg38/NA12885/retro_v42_1/NA12885.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus06<- read.table("/home/xwzhu/Platium/hg38/NA12886/retro_v42_1/NA12886.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus07<- read.table("/home/xwzhu/Platium/hg38/NA12887/retro_v42_1/NA12887.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus08<- read.table("/home/xwzhu/Platium/hg38/NA12888/retro_v42_1/NA12888.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus09<- read.table("/home/xwzhu/Platium/hg38/NA12893/retro_v42_1/NA12893.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus10<- read.table("/home/xwzhu/Platium/hg38/NA12882/retro_v42_1/NA12882.pe.ALU.matrix.pAT", sep="\t", header=T)
+plus11<- read.table("/home/xwzhu/Platium/hg38/NA12880/retro_v42_1/NA12880.pe.ALU.matrix.pAT", sep="\t", header=T)
+
+minus01<- read.table("/home/xwzhu/Platium/hg38/NA12879/retro_v42_0/NA12879.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus02<- read.table("/home/xwzhu/Platium/hg38/NA12881/retro_v42_0/NA12881.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus03<- read.table("/home/xwzhu/Platium/hg38/NA12883/retro_v42_0/NA12883.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus04<- read.table("/home/xwzhu/Platium/hg38/NA12884/retro_v42_0/NA12884.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus05<- read.table("/home/xwzhu/Platium/hg38/NA12885/retro_v42_0/NA12885.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus06<- read.table("/home/xwzhu/Platium/hg38/NA12886/retro_v42_0/NA12886.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus07<- read.table("/home/xwzhu/Platium/hg38/NA12887/retro_v42_0/NA12887.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus08<- read.table("/home/xwzhu/Platium/hg38/NA12888/retro_v42_0/NA12888.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus09<- read.table("/home/xwzhu/Platium/hg38/NA12893/retro_v42_0/NA12893.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus10<- read.table("/home/xwzhu/Platium/hg38/NA12882/retro_v42_0/NA12882.pe.ALU.matrix.pAT", sep="\t", header=T)
+minus11<- read.table("/home/xwzhu/Platium/hg38/NA12880/retro_v42_0/NA12880.pe.ALU.matrix.pAT", sep="\t", header=T)
+
+dat01 <- rbind(plus01, minus01)
+dat02 <- rbind(plus02, minus02)
+dat03 <- rbind(plus03, minus03)
+dat04 <- rbind(plus04, minus04)
+dat05 <- rbind(plus05, minus05)
+dat06 <- rbind(plus06, minus06)
+dat07 <- rbind(plus07, minus07)
+dat08 <- rbind(plus08, minus08)
+dat09 <- rbind(plus09, minus09)
+dat10 <- rbind(plus10, minus10)
+dat11 <- rbind(plus11, minus11)
+
+subdata01 <- subset(dat01, (dat01[,7] == 1 | dat01[,8] == 1) & ref == 0)
+subdata02 <- subset(dat02, (dat02[,7] == 1 | dat02[,8] == 1) & ref == 0)
+subdata03 <- subset(dat03, (dat03[,7] == 1 | dat03[,8] == 1) & ref == 0)
+subdata04 <- subset(dat04, (dat04[,7] == 1 | dat04[,8] == 1) & ref == 0)
+subdata05 <- subset(dat05, (dat05[,7] == 1 | dat05[,8] == 1) & ref == 0)
+subdata06 <- subset(dat06, (dat06[,7] == 1 | dat06[,8] == 1) & ref == 0)
+subdata07 <- subset(dat07, (dat07[,7] == 1 | dat07[,8] == 1) & ref == 0)
+subdata08 <- subset(dat08, (dat08[,7] == 1 | dat08[,8] == 1) & ref == 0)
+subdata09 <- subset(dat09, (dat09[,7] == 1 | dat09[,8] == 1) & ref == 0)
+subdata10 <- subset(dat10, (dat10[,7] == 1 | dat10[,8] == 1) & ref == 0)
+subdata11 <- subset(dat11, (dat11[,7] == 1 | dat11[,8] == 1) & ref == 0)
+
+test01 <-cbind(subdata01, rep(1, dim(subdata01)[1]))
+test02 <-cbind(subdata02, rep(2, dim(subdata02)[1]))
+test03 <-cbind(subdata03, rep(3, dim(subdata03)[1]))
+test04 <-cbind(subdata04, rep(4, dim(subdata04)[1]))
+test05 <-cbind(subdata05, rep(5, dim(subdata05)[1]))
+test06 <-cbind(subdata06, rep(6, dim(subdata06)[1]))
+test07 <-cbind(subdata07, rep(7, dim(subdata07)[1]))
+test08 <-cbind(subdata08, rep(8, dim(subdata08)[1]))
+test09 <-cbind(subdata09, rep(9, dim(subdata09)[1]))
+test10 <-cbind(subdata10, rep(10, dim(subdata10)[1]))
+test11 <-cbind(subdata11, rep(11, dim(subdata11)[1]))
+
+
+name <- names(dat02)
+colnames(test01) <- c(name, "ID")
+colnames(test02) <- c(name, "ID")
+colnames(test03) <- c(name, "ID")
+colnames(test04) <- c(name, "ID")
+colnames(test05) <- c(name, "ID")
+colnames(test06) <- c(name, "ID")
+colnames(test07) <- c(name, "ID")
+colnames(test08) <- c(name, "ID")
+colnames(test09) <- c(name, "ID")
+colnames(test10) <- c(name, "ID")
+colnames(test11) <- c(name, "ID")
+
+total <- rbind(test01, test02, test03, test04, test05, test06, test07, test08, test09, test10, test11)
+
+sub <- subset(total, !is.na(trans2))
+pos1 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="1")$trans2))[2])
+pos2 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="2")$trans2))[2])
+pos3 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="3")$trans2))[2])
+pos4 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="4")$trans2))[2])
+pos5 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="5")$trans2))[2])
+pos6 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="6")$trans2))[2])
+pos7 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="7")$trans2))[2])
+pos8 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="8")$trans2))[2])
+pos9 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="9")$trans2))[2])
+pos10 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="10")$trans2))[2])
+pos11 <- data.frame("Alu"="pos", "percentage"=100*prop.table(table(subset(sub,pos==1&ID=="11")$trans2))[2])
+
+neg1 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="1")$trans2))[2])
+neg2 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="2")$trans2))[2])
+neg3 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="3")$trans2))[2])
+neg4 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="4")$trans2))[2])
+neg5 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="5")$trans2))[2])
+neg6 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="6")$trans2))[2])
+neg7 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="7")$trans2))[2])
+neg8 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="8")$trans2))[2])
+neg9 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="9")$trans2))[2])
+neg10 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="10")$trans2))[2])
+neg11 <- data.frame("Alu"="neg", "percentage"=100*prop.table(table(subset(sub,pos==0&ID=="11")$trans2))[2])
+map <- rbind(pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9, pos10, pos11, neg1, neg2, neg3, neg4, neg5, neg6, neg7, neg8, neg9, neg10, neg11)
+summap <- summarySE(map, measurevar="percentage", groupvars="Alu")
+posneg <- c("#be1e2d", "#a9aac6")
+
+ggplot(summap, aes(x=Alu, y=percentage, fill=Alu)) +
+        geom_bar(position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=percentage-ci, ymax=percentage+ci),
+                  size=.3,    # Thinner lines
+                  width=.2,
+                  position=position_dodge(.9)) +
+    xlab("") +
+    ylab("") +
+    guides(fill=FALSE) +
+    scale_y_continuous(limits = c(0, 100), breaks=c(0, 20, 40, 60, 80, 100)) +
+    theme_bw() +
+    scale_fill_manual(values = c(posneg)) +
+    theme(legend.justification = c(1, 1), legend.position = c(1, 1)) +
+    theme(legend.text=element_text(size=16),legend.title=element_text(size=18,face="bold")) +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold"))

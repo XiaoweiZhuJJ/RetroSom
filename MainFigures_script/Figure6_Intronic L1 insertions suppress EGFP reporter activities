@@ -1,0 +1,182 @@
+GFP <- read.table("/Users/xiaoweizhu/Documents/MEI/Transfection/23HRS/23hrs.GFP.txt", header=T, sep="\t")
+A <- subset(GFP, Sample == "A")$avg
+B <- subset(GFP, Sample == "B")$avg
+C <- subset(GFP, Sample == "C")$avg
+D <- subset(GFP, Sample == "D")$avg
+
+boxplot(log(29+A), log(29+B), log(29+C), log(29+D))
+
+library(plyr)
+counts <- ddply(GFP, .(GFP$well, GFP$picture), nrow)
+
+t.test(log(29+A), log(29+C))
+t.test(log(29+B), log(29+D))
+t.test(log(29+B), log(29+C))
+t.test(log(29+A), log(29+B))
+
+L1gfp <- subset(GFP, Sample=="B" | Sample=="D")
+L2gfp <- subset(GFP, Sample=="A" | Sample=="C")
+
+boxplot(log(avg+29)~well + picture, data=L1gfp)
+boxplot(log(avg+29)~well + picture, data=L2gfp)
+
+temp1 <- subset(L1gfp, well=="D2" & picture=="1")
+temp2 <- subset(L1gfp, well=="B1" & picture=="0")
+mean(log(temp1$avg+29)) -  mean(log(temp2$avg+29))
+
+c1 <- data.frame(A, rep("GL1#2", 469), rep("691", 469), rep("1", 469))
+names(c1) <- c("GFP", "Reporter", "Length", "Status")
+c2 <- data.frame(B, rep("GCont#1", 644), rep("686", 644), rep("0", 644))
+names(c2) <- c("GFP", "Reporter", "Length", "Status")
+c3 <- data.frame(C, rep("GCont#2", 641), rep("240", 641), rep("0", 641))
+names(c3) <- c("GFP", "Reporter", "Length", "Status")
+c4 <- data.frame(D, rep("GL1#1", 570), rep("1123", 570), rep("1", 570))
+names(c4) <- c("GFP", "Reporter", "Length", "Status")
+
+L1 <- rbind(c2, c4)
+L2 <- rbind(c1, c3)
+L3 <- rbind(c1, c2, c3, c4)
+L3$Length <- as.numeric(as.character(L3$Length))
+L3$Status<- as.numeric(as.character(L3$Status))
+
+linear1 <- glm(log(GFP+29) ~ log(Length) + Status, data = L3)
+linear2 <- glm(log(GFP+29) ~ Status, data = L3)
+linear3 <- glm(log(GFP+29) ~ log(Length), data = L3)
+
+linear3 <- glm(GFP ~ Length, data = L3)
+
+RFP <- read.table("/Users/xiaoweizhu/Documents/MEI/Transfection/23HRS/23hrs.RFP.txt", header=T, sep="\t")
+
+A <- subset(RFP, Sample == "A")$avg
+B <- subset(RFP, Sample == "B")$avg
+C <- subset(RFP, Sample == "C")$avg
+D <- subset(RFP, Sample == "D")$avg
+
+boxplot(log(3+A), log(3+B), log(3+C), log(3+D))
+t.test(log(3+A), log(3+C))
+t.test(log(3+B), log(3+D))
+
+library(ggplot2)
+
+### Figure 7F-G ###
+GFP <- read.table("/Users/xiaoweizhu/Documents/MEI/Transfection/23HRS/23hrs.GFP.txt", header=T, sep="\t")
+RFP <- read.table("/Users/xiaoweizhu/Documents/MEI/Transfection/23HRS/23hrs.RFP.txt", header=T, sep="\t")
+A <- subset(GFP, Sample == "A")$avg
+B <- subset(GFP, Sample == "B")$avg
+C <- subset(GFP, Sample == "C")$avg
+D <- subset(GFP, Sample == "D")$avg
+c1 <- data.frame(A, rep("GL1#2", 469), rep("691", 469), rep("1", 469), rep("GFP", 469))
+names(c1) <- c("Fluo", "Reporter", "Length", "Status", "Channel")
+c2 <- data.frame(B, rep("GCont#1", 644), rep("686", 644), rep("0", 644), rep("GFP", 644))
+names(c2) <- c("Fluo", "Reporter", "Length", "Status", "Channel")
+c3 <- data.frame(C, rep("GCont#2", 641), rep("240", 641), rep("0", 641), rep("GFP", 641))
+names(c3) <- c("Fluo", "Reporter", "Length", "Status", "Channel")
+c4 <- data.frame(D, rep("GL1#1", 570), rep("1123", 570), rep("1", 570), rep("GFP", 570))
+names(c4) <- c("Fluo", "Reporter", "Length", "Status", "Channel")
+
+E <- subset(RFP, Sample == "A")$avg
+F <- subset(RFP, Sample == "B")$avg
+G <- subset(RFP, Sample == "C")$avg
+H <- subset(RFP, Sample == "D")$avg
+c5 <- data.frame(E, rep("GL1#2", 423), rep("691", 423), rep("1", 423), rep("RFP", 423))
+names(c5) <- c("Fluo", "RintControl", "Length", "Status", "Channel")
+c6 <- data.frame(F, rep("GCont#1", 338), rep("686", 338), rep("0", 338), rep("RFP", 338))
+names(c6) <- c("Fluo", "RintControl", "Length", "Status", "Channel")
+c7 <- data.frame(G, rep("GCont#2", 440), rep("240", 440), rep("0", 440), rep("RFP", 440))
+names(c7) <- c("Fluo", "RintControl", "Length", "Status", "Channel")
+c8 <- data.frame(H, rep("GL1#1", 300), rep("1123", 300), rep("1", 300), rep("RFP", 300))
+names(c8) <- c("Fluo", "RintControl", "Length", "Status", "Channel")
+
+### Figure 7F ###
+GFP <- rbind(c1, c2, c3, c4)
+ggplot(GFP, aes(x=Reporter, y=Fluo+29)) +
+  geom_violin(size=.3, fill="#8dc63f")+
+  geom_boxplot(width=0.1, size=.3) +
+  theme_minimal()+
+  scale_x_discrete(limits=c("GCont#1", "GL1#1", "GCont#2", "GL1#2")) +
+  scale_y_log10(breaks=c(1, 10, 25, 64, 160, 400, 1000, 2500)) +
+  ylab("GFP intensities") +
+  theme(axis.text=element_text(size=18),
+  axis.title=element_text(size=24,face="bold")) +
+  theme(legend.text=element_text(size=14),legend.title=element_text(size=16,face="bold")) +
+  guides(fill=FALSE)
+
+### Figure 7G ###
+RFP <- rbind(c5, c6, c7, c8)
+ggplot(RFP, aes(x=RintControl, y=Fluo+3)) +
+  geom_violin(size=.3, fill="#ff7d7d")+
+  geom_boxplot(width=0.1, size=.3) +
+  theme_minimal()+
+  scale_x_discrete(limits=c("GCont#1", "GL1#1", "GCont#2", "GL1#2")) +
+  scale_y_log10(breaks=c(1, 10, 25, 64, 160, 400, 1000, 2500)) +
+  ylab("RFP intensities") +
+  theme(axis.text=element_text(size=18),
+  axis.title=element_text(size=24,face="bold")) +
+  theme(legend.text=element_text(size=14),legend.title=element_text(size=16,face="bold"))+
+  guides(fill=FALSE)
+
+### Figure 7H ###
+dat <- read.table("/Users/xiaoweizhu/Documents/MEI/Transfection/Plasmid24hr.txt", header=T, sep="\t")
+
+A1_back1 <- mean(subset(dat, well=="A1" & picture==1 & status=="back")$avg)
+A1_back2 <- mean(subset(dat, well=="A1" & picture==2 & status=="back")$avg)
+A1_back3 <- mean(subset(dat, well=="A1" & picture==3 & status=="back")$avg)
+B1_back1 <- mean(subset(dat, well=="B1" & picture==1 & status=="back")$avg)
+B1_back2 <- mean(subset(dat, well=="B1" & picture==2 & status=="back")$avg)
+B1_back3 <- mean(subset(dat, well=="B1" & picture==3 & status=="back")$avg)
+C1_back1 <- mean(subset(dat, well=="C1" & picture==1 & status=="back")$avg)
+C1_back2 <- mean(subset(dat, well=="C1" & picture==2 & status=="back")$avg)
+C1_back3 <- mean(subset(dat, well=="C1" & picture==3 & status=="back")$avg)
+D1_back1 <- mean(subset(dat, well=="D1" & picture==1 & status=="back")$avg)
+D1_back2 <- mean(subset(dat, well=="D1" & picture==2 & status=="back")$avg)
+D1_back3 <- mean(subset(dat, well=="D1" & picture==3 & status=="back")$avg)
+
+A2_back1 <- mean(subset(dat, well=="A2" & picture==1 & status=="back")$avg)
+A2_back2 <- mean(subset(dat, well=="A2" & picture==2 & status=="back")$avg)
+A2_back3 <- mean(subset(dat, well=="A2" & picture==3 & status=="back")$avg)
+B2_back1 <- mean(subset(dat, well=="B2" & picture==1 & status=="back")$avg)
+B2_back2 <- mean(subset(dat, well=="B2" & picture==2 & status=="back")$avg)
+B2_back3 <- mean(subset(dat, well=="B2" & picture==3 & status=="back")$avg)
+C2_back1 <- mean(subset(dat, well=="C2" & picture==1 & status=="back")$avg)
+C2_back2 <- mean(subset(dat, well=="C2" & picture==2 & status=="back")$avg)
+C2_back3 <- mean(subset(dat, well=="C2" & picture==3 & status=="back")$avg)
+D2_back1 <- mean(subset(dat, well=="D2" & picture==1 & status=="back")$avg)
+D2_back2 <- mean(subset(dat, well=="D2" & picture==2 & status=="back")$avg)
+D2_back3 <- mean(subset(dat, well=="D2" & picture==3 & status=="back")$avg)
+
+
+back <- c(A1_back1, A1_back2, A1_back3, B1_back1, B1_back2, B1_back3, C1_back1, C1_back2, C1_back3, D1_back1, D1_back2, D1_back3)
+A1 <- c(subset(dat, well=="A1" & picture==1 & status!="back")$avg - A1_back1, subset(dat, well=="A1" & picture==2 & status!="back")$avg - A1_back2, subset(dat, well=="A1" & picture==3 & status!="back")$avg - A1_back3)
+B1<- c(subset(dat, well=="B1" & picture==1 & status!="back")$avg - B1_back1, subset(dat, well=="B1" & picture==2 & status!="back")$avg - B1_back2, subset(dat, well=="B1" & picture==3 & status!="back")$avg - B1_back3)
+C1 <- c(subset(dat, well=="C1" & picture==1 & status!="back")$avg - C1_back1, subset(dat, well=="C1" & picture==2 & status!="back")$avg - C1_back2, subset(dat, well=="C1" & picture==3 & status!="back")$avg - C1_back3)
+D1 <- c(subset(dat, well=="D1" & picture==1 & status!="back")$avg - D1_back1, subset(dat, well=="D1" & picture==2 & status!="back")$avg - D1_back2, subset(dat, well=="D1" & picture==3 & status!="back")$avg - D1_back3)
+A2 <- c(subset(dat, well=="A2" & picture==1 & status!="back")$avg - A2_back1, subset(dat, well=="A2" & picture==2 & status!="back")$avg - A2_back2, subset(dat, well=="A2" & picture==3 & status!="back")$avg - A2_back3)
+B2<- c(subset(dat, well=="B2" & picture==1 & status!="back")$avg - B2_back1, subset(dat, well=="B2" & picture==2 & status!="back")$avg - B2_back2, subset(dat, well=="B2" & picture==3 & status!="back")$avg - B2_back3)
+C2 <- c(subset(dat, well=="C2" & picture==1 & status!="back")$avg - C2_back1, subset(dat, well=="C2" & picture==2 & status!="back")$avg - C2_back2, subset(dat, well=="C2" & picture==3 & status!="back")$avg - C2_back3)
+D2 <- c(subset(dat, well=="D2" & picture==1 & status!="back")$avg - D2_back1, subset(dat, well=="D2" & picture==2 & status!="back")$avg - D2_back2, subset(dat, well=="D2" & picture==3 & status!="back")$avg - D2_back3)
+
+A <- c(A1, A2)
+B <- c(B1, B2)
+C <- c(C1, C2)
+D <- c(D1, D2)
+
+c1 <- data.frame(A, rep("GCont#2", 234), rep("240", 234), rep("0", 234))
+names(c1) <- c("GFP", "Reporter", "Length", "Status")
+c2 <- data.frame(B, rep("GCont#1", 271), rep("691", 271), rep("0", 271))
+names(c2) <- c("GFP", "Reporter", "Length", "Status")
+c3 <- data.frame(C, rep("GL1#2", 232), rep("686", 232), rep("1", 232))
+names(c3) <- c("GFP", "Reporter", "Length", "Status")
+c4 <- data.frame(D, rep("GL1#1", 215), rep("1123", 215), rep("1", 215))
+names(c4) <- c("GFP", "Reporter", "Length", "Status")
+
+GFP <- rbind(c2, c4, c1, c3)
+ggplot(GFP, aes(x=Reporter, y=4+GFP)) +
+  geom_violin(size=.3,fill="#8dc63f")+
+  geom_boxplot(width=0.1, size=.3) +
+  theme_minimal()+
+  scale_x_discrete(limits=c("GCont#1", "GL1#1", "GCont#2", "GL1#2")) +
+  scale_y_log10(breaks=c(1, 10, 25, 64, 160, 400, 1000, 2500)) +
+  ylab("GFP intensities") +
+  theme(axis.text=element_text(size=18),
+  axis.title=element_text(size=24,face="bold")) +
+  theme(legend.text=element_text(size=14),legend.title=element_text(size=16,face="bold"))

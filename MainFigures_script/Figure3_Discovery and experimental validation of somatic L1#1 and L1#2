@@ -1,0 +1,103 @@
+library(ggplot2)
+library(ggpubr)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval:
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+
+### Figure 3B ###
+Astro <- c(0.25, 0.18, 0.32, 0.38,0.3534453,	0.1812592,	0.194877,	0.2821445)
+Heart <- c(0, 0, 0, 0,0,0,0,0)
+Neuron<- c(0.47, 0.35, 0.25, 0.33,0.552766,	0.1906283,	0.4854844,	0.2358705)
+neg <- c(0,0,0,0)
+dat1 <- data.frame(rep("NeuN-", 8), Astro)
+names(dat1) <- c("tissue", "frequency")
+dat2 <- data.frame(rep("NeuN+", 8), Neuron)
+names(dat2) <- c("tissue", "frequency")
+dat3 <- data.frame(rep("Fibroblast", 8), Heart)
+names(dat3) <- c("tissue", "frequency")
+dat4 <- data.frame(rep("NA12878", 4), neg)
+names(dat4) <- c("tissue", "frequency")
+dat <- rbind(dat1, dat2, dat3, dat4)
+dat$frequency <- 2*dat$frequency
+ddPCR <- summarySE(dat, measurevar="frequency", groupvars=c("tissue"))
+
+ggplot(ddPCR, aes(x=tissue, y=frequency)) +
+    geom_bar(fill="steelblue", position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+    geom_errorbar(aes(ymin=frequency-se, ymax=frequency+se),
+         size=0.5,    # Thinner lines
+         width=.2,
+         position=position_dodge(.9)) +
+    xlab("Tissue type") +
+    ylab("Mosaic level") +
+    scale_y_continuous(limits = c(0, 1), breaks=c(0, 0.2, 0.4, 0.6, 0.8,1), labels=c("0%","0.2%","0.4%","0.6%", "0.8%", "1%")) +
+    guides(fill=FALSE) +
+    theme_pubr() +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold"))
+
+### Figure 3E ###
+Astro <- c(0.2713367, 0.1966815, 0.3241804, 0.2409726, 0.342777, 0.2151242,0.2895646,0.2292723,0.2292854,0.291157)
+Heart <- c(0, 0, 0, 0, 0 ,0,0,0,0,0)
+Neuron<- c(0.6769203, 0.6661942, 0.3354809, 0.6542853, 0.5131416, 0.5713035,0.7238302,0.5299921,0.4926736,0.8230651)
+neg <- c(0,0.02, 0, 0,0, 0.04)
+dat1 <- data.frame(rep("NeuN-", 10), Astro)
+names(dat1) <- c("tissue", "frequency")
+dat2 <- data.frame(rep("NeuN+", 10), Neuron)
+names(dat2) <- c("tissue", "frequency")
+dat3 <- data.frame(rep("Fibroblast", 10), Heart)
+names(dat3) <- c("tissue", "frequency")
+dat4 <- data.frame(rep("NA12878", 6), neg)
+names(dat4) <- c("tissue", "frequency")
+dat <- rbind(dat1, dat2, dat3, dat4)
+dat$frequency <- 2*dat$frequency
+ddPCR <- summarySE(dat, measurevar="frequency", groupvars=c("tissue"))
+
+ggplot(ddPCR, aes(x=tissue, y=frequency)) +
+    geom_bar(fill="steelblue", position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+    geom_errorbar(aes(ymin=frequency-se, ymax=frequency+se),
+         size=0.5,    # Thinner lines
+         width=.2,
+         position=position_dodge(.9)) +
+    xlab("Tissue type") +
+    ylab("Mosaic level") +
+    scale_y_continuous(limits = c(0, 1.6), breaks=c(0, 0.4, 0.8, 1.2, 1.6), labels=c("0%","0.4%","0.8%","1.2%", "1.6%")) +
+    guides(fill=FALSE) +
+    theme_pubr() +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold"))

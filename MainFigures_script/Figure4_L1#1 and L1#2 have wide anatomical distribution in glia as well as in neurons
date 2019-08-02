@@ -1,0 +1,100 @@
+library(ggplot2)
+library(plyr)
+
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval:
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+
+
+dat <- read.table("/Users/xiaoweizhu/Documents/MEI/12004_FACS/12004FACS.txt", header=T, sep="\t")
+sum_sens <- summarySE(dat, measurevar="Mosaic", groupvars=c("LINE", "Zones", "Tissue"))
+
+sum_sens$LINE <- revalue(sum_sens$LINE, c("L1MEI1"="L1#1", "L1MEI2"="L1#2"))
+for (i in 1:92)
+   {
+    if ((sum_sens[i,"Tissue"] == "Glia") & (sum_sens[i,"Mosaic"] > -0.05))
+       {
+        sum_sens[i,"Mosaic"] =0
+        sum_sens[i,"ci"]=0
+       }
+    if ((sum_sens[i,"Tissue"] == "Neuron") & (sum_sens[i,"Mosaic"] < 0.05))
+       {
+        sum_sens[i,"Mosaic"] =0
+        sum_sens[i,"ci"]=0
+       }
+   }
+
+### Figure 4A ###
+sum_sens1 <- subset(sum_sens, LINE=="L1#1")
+sum_sens2 <- subset(sum_sens, LINE=="L1#2")
+neuron <- c("#1c75bc", "#ec008c")
+ggplot(sum_sens1, aes(x=Zones, y=Mosaic, fill=Tissue)) +
+        geom_bar(position="identity", stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=Mosaic-ci, ymax=Mosaic+ci),
+                  size=.3,    # Thinner lines
+                  width=.2,
+                  position="identity") +
+       scale_x_discrete(limits= c("LFD","LFP","LMD","LMP","LPD","LPP","LOD","LOP","LSTG","LPt","LCb","RFD","RFP","RMD","RMP","RPD","RPP","ROD","ROP","RSTG2","RSTG","RPt","RCb")) +
+    xlab("Brain region") +
+    ylab("Mosaicism of L1#1") +
+    scale_y_continuous(breaks=c(-5, -3, -1, 0, 1, 3), labels=c("5%", "3%", "1%", "0", "1%", "3%"), limits=c(-5,3)) +
+    theme_bw() +
+    scale_fill_manual(values = c(neuron)) +
+    theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=9),
+        axis.text.x=element_text(angle=45, hjust=1)) +
+    guides(fill=FALSE)
+
+### Figure 4B ###
+ggplot(sum_sens2, aes(x=Zones, y=Mosaic, fill=Tissue)) +
+        geom_bar(position="identity", stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=Mosaic-ci, ymax=Mosaic+ci),
+                  size=.3,    # Thinner lines
+                  width=.2,
+                  position="identity") +
+       scale_x_discrete(limits= c("LFD","LFP","LMD","LMP","LPD","LPP","LOD","LOP","LSTG","LPt","LCb","RFD","RFP","RMD","RMP","RPD","RPP","ROD","ROP","RSTG2","RSTG","RPt","RCb")) +
+    xlab("Brain region") +
+    ylab("Mosaicism of L1#2") +
+    scale_y_continuous(breaks=c(-5, -3, -1, 0, 1, 3), labels=c("5%", "3%", "1%", "0", "1%", "3%"), limits=c(-5,3)) +
+    theme_bw() +
+    scale_fill_manual(values = c(neuron)) +
+    theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=9),
+        axis.text.x=element_text(angle=45, hjust=1)) +
+    guides(fill=FALSE)

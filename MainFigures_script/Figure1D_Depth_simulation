@@ -1,0 +1,46 @@
+### Figure 1D, Figure S4 ###
+# We performed a simulation to evaluate the relationship between the sequencing depth, number of supporting reads, and the detectable mosaicism of somatic MEIs (Fig. S4). In the simulation, we assumed that (i) sequencing depth is 50x; (ii) sequencing reads are 2x150bp and the fragment length (including read1, read2, and the insert in between) follows a normal distribution: N(600,100); (iii) MEI is from 4500bp to 5500bp on a DNA segment that is 10kb long; (iv) MEI has no transduction; (v) MEI is heterozygous in the somatic cells; (vi) the sequencing fragment is shorter than the MEI and thus cannot span both upstream and downstream junctions; (vii) any reads that cross the MEI junction with >30bp overlapping with the ME consensus and >half of the read length (75bp) overlapping with the flanking sequences can be used as supporting reads (i.e., the flanking sequence can be uniquely mapped); (vi) there are no split-read supporting reads from the MEI junction around the poly(A) tail because the poly(A) tail may cause inaccurate mapping of the split-read (see supplementary text). Under these assumptions, we define the putatively detectable mosaicism as the lowest mosaicism at which 50% of MEIs can be detected with a certain number of supporting reads
+
+200X 150x2 in 100000bp
+66666 reads distance ~ N(300,100)
+insertion at 5KB-6KB
+count the number of fragment that goes across junction
+6666 fragments ~ N(600, 100)
+50X 150x2 in 10000bp, insertion at 5000-6000bp
+100% MAF: 1667 fragments ~ N(600, 100)
+
+0.84% MAF ~ 1.7% mosaicism ~ 14 fragments ~ >50 with 1 support reads from upper junction ~ 2 support read for both junctions
+
+support <- c()
+left <- 4500
+right <- 5500
+read <- 150
+overhang <- 30
+n<-8
+simul <- 50000
+for (i in 1:simul)
+   {
+    start <- runif(n, min=0, max=10000)
+    size <- rnorm(n, mean=600, sd=100)
+    support[i] = 0
+    for (j in 1:n)
+        {
+          if (start[j] < (left - read/2) && ((start[j] + size[j]) > (left + overhang)) )
+             {
+              support[i] = support[i] + 1
+             }
+          if (((start[j]+read) < right) & ((start[j] + size[j]) > (right + read/2)) )
+             {
+              support[i] = support[i] + 1
+             }
+        }
+    }
+sum(support>=5)
+
+1 support ~ 8 reads  ~ 0.48% MAF ~ 0.96% mosaicism
+2 support ~ 19 reads ~ 1.14% MAF ~ 2.24% mosaicism
+3 support ~ 31 reads ~ 1.86% MAF ~ 3.72% mosaicism
+4 support ~ 42 reads ~ 2.52% MAF ~ 5.04% mosaicism
+5 support ~ 54 reads ~ 3.24% MAF ~ 6.48% mosaicism
+36 support ~ 417 reads ~ 25.02% MAF ~ 50.04% mosaicism
+72 support ~ 833 reads ~ 50% MAF ~ 100% mosaicism

@@ -1,0 +1,24 @@
+### Significant GWAS SNPs ###
+### one bar ###
+  dat <- read.table("~/Documents/MEI/10q22_32/Unique_sig_SNPs.txt", header =F, sep="\t")
+  neuro <- dat[,4] == "Neurological disorder"
+  dat <- cbind(dat, neuro)
+  names(dat) <- c("chr", "cord", "rs", "gwas", "scz", "neuro")
+  library(ggplot2)
+  library(ggpubr)
+
+  posneg <- c("blue", "red")
+    ggplot(dat, aes(x = cord, y = chr)) +
+      geom_point(aes(color=factor(neuro)), position=position_jitter(width=10,height=0),shape=124, size=1.5, show.legend = FALSE) +
+      scale_x_continuous(limits=c(102825368,103202254)) +
+      theme_pubr() +
+      theme(axis.text=element_text(size=8),
+          axis.title=element_text(size=8),
+          strip.text.x = element_text(size =8))+
+      geom_vline(xintercept = 102989359, col="purple") +
+      geom_vline(xintercept = 102825368, col="black") +
+      geom_vline(xintercept = 103202254, col="black") +
+      scale_color_manual(values = c(posneg)) +
+      xlab("") +
+      ylab("")
+      ggsave("/Users/xiaoweizhu/Documents/MEI_slides/Figures/components/onebar.10q24.32.pdf",useDingbats=FALSE,width=10, height=1.5)

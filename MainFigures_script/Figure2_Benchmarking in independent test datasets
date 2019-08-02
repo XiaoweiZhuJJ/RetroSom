@@ -1,0 +1,186 @@
+library(ggplot2)
+library(Hmisc)
+library(wesanderson)
+library(ggplot2)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval:
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+
+### Figure 2A ###
+L1 <- read.table("/home/xwzhu/transfer/Precision/LINE/prog/LINE.read1.stat", sep="\t", header=T)
+L2 <- read.table("/home/xwzhu/transfer/Precision/LINE/prog/LINE.read2.stat", sep="\t", header=T)
+LINE <- rbind(L1, L2)
+sum_sens <- summarySE(LINE, measurevar="recall", groupvars=c("subject", "support"))
+
+# sensitivity #
+ggplot(sum_sens, aes(x=support, y=recall, fill=subject)) +
+        geom_bar(position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=recall-ci, ymax=recall+ci),
+                  size=.3,    # Thinner lines
+                  width=.2,
+                  position=position_dodge(.9)) +
+    xlab("") +
+    ylab("Sensitivity") +
+    theme_bw() +
+    guides(fill=FALSE) +
+    scale_y_continuous(limits = c(0, 1.05), breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold"))+
+   scale_x_discrete(labels=c(">=1 read", ">=2 reads"))
+
+# precision #
+sum_sens <- summarySE(LINE, measurevar="precision", groupvars=c("subject", "support"))
+ggplot(sum_sens, aes(x=support, y=precision, fill=subject)) +
+        geom_bar(position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=precision-ci, ymax=precision+ci),
+                  size=.3,    # Thinner lines
+                  width=.2,
+                  position=position_dodge(.9)) +
+    xlab("") +
+    ylab("Sensitivity") +
+    theme_bw() +
+    guides(fill=FALSE) +
+    scale_y_continuous(limits = c(0, 1.05), breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold"))+
+    scale_x_discrete(labels=c(">=1 read", ">=2 reads"))
+
+# number of false positives #
+ggplot(LINE, aes(interaction(subject, support), FP, color=subject)) +
+   geom_jitter(width = 0.1, ,show.legend=F) +
+   xlab("") +
+   ylab("False positives") +
+   theme_bw() +
+   scale_x_discrete(breaks= c("F2noMDA.1read","F2noMDA.2reads"), labels=c(">=1 read", ">=2 reads")) +
+   scale_y_continuous(limits = c(-2, 3000), breaks=c(0, 100, 500, 1000, 2000, 3000)) +
+   theme(axis.text=element_text(size=18),
+       axis.title=element_text(size=24,face="bold"))
+
+### Figure 2B ###
+# sensitivity #
+dat <- read.table("/Users/xiaoweizhu/Documents/MEI/PCRfree/PCR_scores.txt", header=T, sep="\t")
+datstat <- summarySE(dat, measurevar="Score", groupvars=c("Type","Model","PCR","TE","Tissue"))
+sub1 <- subset(datstat, Type=="Recall" & TE=="L1" & Tissue=="Neuron")
+ggplot(sub1, aes(x=Model, y=Score, fill=PCR)) +
+        scale_fill_brewer(palette="Paired") +
+        geom_bar(position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=Score-ci, ymax=Score+ci),
+                  size=0.3,    # Thinner lines
+                  width=.2,
+                  position=position_dodge(.9)) +
+    xlab("") +
+    ylab("") +
+    theme_bw() +
+    guides(fill=FALSE) +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold"))
+
+# precision #
+sub1 <- subset(datstat, Type=="Precision" & TE=="L1" & Tissue=="Neuron")
+ggplot(sub1, aes(x=Model, y=Score, fill=PCR)) +
+        scale_fill_brewer(palette="Paired") +
+        geom_bar(position=position_dodge(), stat="identity",
+         colour="black", # Use black outlines,
+         size=.3) +      # Thinner lines+
+        geom_errorbar(aes(ymin=Score-ci, ymax=Score+ci),
+                  size=0.3,    # Thinner lines
+                  width=.2,
+                  position=position_dodge(.9)) +
+    xlab("") +
+    ylab("") +
+    theme_bw() +
+    guides(fill=FALSE) +
+    theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=24,face="bold"))
+
+### Figure 2C-E ###
+dat <- read.table("/Users/xiaoweizhu/Documents/MEI/titration/400X/L1_stats_hetero.txt", header=T, sep="\t")
+sens <- dat[,1:3]
+prec <- dat[,-3]
+sens$Depth <- as.factor(sens$Depth)
+prec$Depth <- as.factor(prec$Depth)
+
+### Figure 2C ###
+ggplot(data=sens, aes(x=Freq, y=Sensitivity, group=Depth)) +
+  geom_line(aes(color=Depth)) +
+  geom_point(aes(color=Depth,shape=Depth),size=4) +
+  scale_shape_manual(values=c(1, 3, 16, 17)) +
+  xlab("Genome frequency (%)") +
+  ylab("Sensitivity (L1)") +
+  scale_x_log10(breaks=c(0.04, 0.2, 1, 5, 25), limits=c(0.04,25)) +
+  scale_y_continuous(limits = c(0, 1), breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
+  theme_bw() +
+  theme(axis.text=element_text(size=18),
+      axis.title=element_text(size=24,face="bold")) +
+  theme(legend.justification = c(0.02, 0.98), legend.position = c(0.02, 0.98)) +
+  theme(legend.text=element_text(size=16),legend.title=element_text(size=18,face="bold"))
+ ggsave("/Users/xiaoweizhu/Documents/MEI_slides/Figures/components/Titration_sens_L1.pdf",useDingbats=FALSE, width=7, height=7)
+
+### Figure 2D ###
+ ggplot(data=prec, aes(x=Freq, y=Precision, group=Depth)) +
+   geom_line(aes(color=Depth)) +
+   geom_point(aes(color=Depth, shape=Depth),size=4) +
+   scale_shape_manual(values=c(1, 3, 16, 17)) +
+   xlab("Genome frequency (%)") +
+   ylab("Precision (L1)") +
+   theme_bw() +
+   scale_x_log10(breaks=c(0.04, 0.2, 1, 5, 25), limits=c(0.02,50)) +
+   scale_y_continuous(limits = c(-0.05, 1.05), breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
+   theme(axis.text=element_text(size=18),
+       axis.title=element_text(size=24,face="bold")) +
+   theme(legend.justification = c(0.02, 0.98), legend.position = c(0.02, 0.98)) +
+   theme(legend.text=element_text(size=16),legend.title=element_text(size=18,face="bold"))
+
+### Figure 2E ###
+names<- c("No filter\n>=1read", "No filter\n>=2reads", "RetroSOM\n>=1read", "RetroSOM\n>=2reads")
+FP <- c(132978,4316,584,0)
+falseP<-data.frame(names,FP)
+ggplot(falseP, aes(x=names, y=FP)) +
+    geom_bar(stat="identity", fill="#a6cee3") +
+    scale_x_discrete(limits=c("No filter\n>=1read", "No filter\n>=2reads", "RetroSOM\n>=1read", "RetroSOM\n>=2reads")) +
+    scale_y_log10(breaks=c(1, 100, 1000, 10000, 100000), limits=c(1,200000)) +
+    geom_text(aes(label=FP), vjust=-1, color="black",
+              position = position_dodge(0.9), size=5) +
+    xlab("Stringency") +
+    ylab("False positives (L1)") +
+    theme_bw() +
+    theme(axis.text=element_text(size=18),
+    axis.title=element_text(size=24,face="bold"))
